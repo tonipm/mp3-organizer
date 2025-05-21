@@ -1,0 +1,17 @@
+{
+  "name": "mp3-organizer",
+  "version": "1.0.0",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "Toni Peraira <toniperairam@gmail.com> (https://tonipm.com/)",
+  "license": "GPL-3.0",
+  "description": "Automate the organization of your MP3 music collection by sorting files into artist and album folders using ID3 tags.",
+  "dependencies": {
+    "fs-extra": "^11.3.0",
+    "node-id3": "^0.2.9",
+    "path": "^0.12.7"
+  }
+}
