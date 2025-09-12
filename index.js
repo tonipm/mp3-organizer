@@ -3,7 +3,8 @@ const path = require('path');
 const fse = require('fs-extra');
 const NodeID3 = require('node-id3');
 
-const sourceDir = '/Users/tonipm/Downloads/Telegram Desktop';
+const sourceDir = '/Volumes/192.168.1.20/Music/Various albums';
+const isRecursive = true; // Change to `false` to disable recursion
 
 async function execute(dirPath) {
   try {
@@ -11,36 +12,32 @@ async function execute(dirPath) {
 
     for (const file of files) {
       const fullPath = path.join(dirPath, file);
-
-      if (path.extname(file).toLowerCase() !== '.mp3') {
-        continue;
-      }
       const stat = await fs.promises.stat(fullPath);
-      if (!stat.isFile()) {
-        continue;
+
+      if (stat.isDirectory() && isRecursive) {
+        // Llamada recursiva solo si `isRecursive` es `true`
+        await execute(fullPath);
+      } else if (stat.isFile() && path.extname(file).toLowerCase() === '.mp3') {
+        const tags = NodeID3.read(fullPath);
+        const artistDirName = sanitize(tags.artist || 'Unknown Artist');
+        const albumDirName = artistDirName + ' - ' + tags.year + ' - ' + sanitize(
+            tags.album || 'Unknown Album');
+        const track = String(tags.trackNumber || '00').padStart(2, '0');
+        const title = sanitize(tags.title || 'Unknown Title');
+
+        const artistDir = path.join(sourceDir, artistDirName);
+        const albumDir = path.join(artistDir, albumDirName);
+
+        await fse.ensureDir(albumDir);
+
+        const newFilename = `${track}. ${title}.mp3`;
+        const newFilePath = path.join(albumDir, newFilename);
+
+        await fse.move(fullPath, newFilePath, {overwrite: true});
+
+        console.log(`✔️ ${file} → ${newFilePath}`);
       }
-
-      const tags = NodeID3.read(fullPath);
-      const artistDirName = sanitize(tags.artist || 'Unknown Artist');
-      const albumDirName = artistDirName + ' - ' + tags.year + ' - ' + sanitize(
-          tags.album || 'Unknown Album');
-      const track = String(tags.trackNumber || '00').padStart(2, '0');
-      const title = sanitize(tags.title || 'Unknown Title');
-
-      const artistDir = path.join(dirPath, artistDirName);
-      const albumDir = path.join(artistDir, albumDirName);
-
-      await fse.ensureDir(albumDir);
-
-      const newFilename = `${track}. ${title}.mp3`;
-      const newFilePath = path.join(albumDir, newFilename);
-
-      await fse.move(fullPath, newFilePath, {overwrite: true});
-
-      console.log(`✔️ ${file} → ${newFilePath}`);
     }
-
-    console.log('🎉 Organization completed.');
   } catch (err) {
     console.error('❌ Error:', err);
   }
