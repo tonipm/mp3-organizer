@@ -19,9 +19,10 @@ async function execute(dirPath) {
         await execute(fullPath);
       } else if (stat.isFile() && path.extname(file).toLowerCase() === '.mp3') {
         const tags = NodeID3.read(fullPath);
-        const artistDirName = sanitize(tags.artist || 'Unknown Artist');
-        const albumDirName = artistDirName + ' - ' + tags.year + ' - ' + sanitize(
-            tags.album || 'Unknown Album');
+        const artistDirName = sanitize(
+            (tags.artist?.split('/')[0] || 'Unknown Artist').trim());
+        const albumDirName = artistDirName + ' - ' + tags.year + ' - '
+            + sanitize(tags.album || 'Unknown Album');
         const track = String(tags.trackNumber || '00').padStart(2, '0');
         const title = sanitize(tags.title || 'Unknown Title');
 
@@ -33,9 +34,11 @@ async function execute(dirPath) {
         const newFilename = `${track}. ${title}.mp3`;
         const newFilePath = path.join(albumDir, newFilename);
 
-        await fse.move(fullPath, newFilePath, {overwrite: true});
-
-        console.log(`✔️ ${file} → ${newFilePath}`);
+        console.log(fullPath, newFilePath)
+        if (fullPath !== newFilePath) {
+          await fse.move(fullPath, newFilePath, {overwrite: true});
+          console.log(`✔️ ${file} → ${newFilePath}`);
+        }
       }
     }
   } catch (err) {
